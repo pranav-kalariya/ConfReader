@@ -1,0 +1,9 @@
+PyYAML
+ConfigParser
+pathlib
+python-dotenv
+json
+logging
+unittest
+mock
+coverage
