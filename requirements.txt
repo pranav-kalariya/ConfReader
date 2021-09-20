@@ -1,9 +1,6 @@
-PyYAML
-ConfigParser
-pathlib
-python-dotenv
-json
-logging
-unittest
-mock
-coverage
+PyYAML==5.4.1
+ConfigParser==5.0.0
+pathlib==1.0.1
+python-dotenv==0.19.0
+mock==4.0.3
+coverage==5.5
