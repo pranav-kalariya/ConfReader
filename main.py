@@ -51,8 +51,8 @@ def handle_exception(method):
             raise e
         except Exception as e:
             close_msg = "Returning to the main menu"
-            print("Error Occured: {}\n{}".format(e, close_msg))
-            logger.error("Error Occured: {}\n{}".format(e, close_msg))
+            print("Error Occured: {}\nConfiguration file is Faulty.\n{}".format(e, close_msg))
+            logger.error("Error Occured: {}\nConfiguration file is Faulty.\n{}".format(e, close_msg))
             sys.exit(0)
 
     return wrapper
