@@ -51,8 +51,8 @@ def handle_exception(method):
             raise e
         except Exception as e:
             close_msg = "Returning to the main menu"
-            print("Error Occured: {}\nConfiguration file is Faulty.\n{}".format(e, close_msg))
-            logger.error("Error Occured: {}\nConfiguration file is Faulty.\n{}".format(e, close_msg))
+            print("Error Occured: {}\n{}".format(e, close_msg))
+            logger.error("Error Occured: {}\n{}".format(e, close_msg))
             sys.exit(0)
 
     return wrapper
@@ -63,6 +63,44 @@ def get_file_path():
     This method is used to get the absolute path of config file from User. 
     """
     return input("Enter absolute file path:")
+
+
+def flatten(init, lkey=''):
+    ret = {}
+    key = lkey
+    if isinstance(init, list):
+        for item in init:
+            if isinstance(item, dict) or isinstance(item, list):
+                ret.update(flatten(item, key+'_'))
+            else:
+                ret[key] = item
+    elif isinstance(init, dict):
+
+        for rkey, val in init.items():
+            key = lkey+rkey
+
+            if isinstance(val, dict) or isinstance(val, list):
+                ret.update(flatten(val, key+'_'))
+            else:
+                ret[key] = val
+
+    return ret
+
+
+@handle_exception
+def convert_to_dict(config):
+    """
+    Reads the config file and convert it to dict
+    Params: 
+        config = parsed config values from ConfigParser.read 
+    Return Value= config values converted to dict (<dict>)
+    """
+    dictionary = {}
+    for section in config.sections():
+        prefix = section+"_"
+        for option in config.options(section):
+            dictionary[prefix+option] = config.get(section, option)
+    return dictionary
 
 
 @retry_with_default_stanza
@@ -83,6 +121,8 @@ def read_conf(file_path, retry=0):
                 config = configparser.ConfigParser(
                     interpolation=configparser.ExtendedInterpolation())
                 config.read(file_path)
+                return convert_to_dict(config)
+
         else:
             logger.error("Config file {} not found.".format(
                 file_path.split("/")[-1]))
@@ -96,8 +136,9 @@ def read_conf(file_path, retry=0):
             for line in fp.readlines():
                 if line.startswith('#'):
                     continue
+                print(line)
                 key, val = line.strip().split('=')
-                config[key] = val
+                config["default_"+key.strip()] = val.strip()
         logger.info("Worked with adding default header to file {}.".format(
             file_path.split("/")[-1]))
         return config
@@ -106,22 +147,6 @@ def read_conf(file_path, retry=0):
             file_path.split("/")[-1]))
         sys.exit(0)
     return config
-
-
-@handle_exception
-def convert_to_dict(config):
-    """
-    Reads the config file and convert it to dict
-    Params: 
-        config = parsed config values from ConfigParser.read 
-    Return Value= config values converted to dict (<dict>)
-    """
-    dictionary = {}
-    for section in config.sections():
-        dictionary[section] = {}
-        for option in config.options(section):
-            dictionary[section][option] = config.get(section, option)
-    return dictionary
 
 
 @handle_exception
@@ -217,7 +242,8 @@ def load_yaml(file_path):
             logger.info("Reading configs from yaml file {}".format(
                 file_path.split("/")[-1]))
             config = yaml.load(f, Loader=yaml.SafeLoader)
-        return config
+            return flatten(config)
+
     else:
         logger.warning("Yaml file {} not found".format(
             file_path.split("/")[-1]))
@@ -262,6 +288,10 @@ def main():
         config = read_conf(file_path)
     elif file_extension == "yaml":
         config = load_yaml(file_path)
+    else:
+        print("File is not a supported config file!")
+        logger.info("File is not a supported config file")
+        sys.exit(1)
 
     menu_options(config)
 
